@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -145,6 +146,22 @@ namespace Paul
             }
         }
 
+        [MenuItem("Paul/GameObject/Reset transform position", priority = 100 * (int)LetterAsInteger.G + (int)LetterAsInteger.R)]
+        private static void ResetTransformPosition()
+        {
+            GameObject[] selectedObjects = Selection.gameObjects;
+
+            foreach (GameObject obj in selectedObjects)
+            {
+                obj.transform.position = Vector3.zero;
+            }
+
+            if (selectedObjects.Length > 0)
+            {
+                EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+            }
+        }
+
         [MenuItem("Paul/GameObject/Select children", priority = 100 * (int)LetterAsInteger.G + (int)LetterAsInteger.S)]
         private static void SelectChildren()
         {
@@ -168,6 +185,30 @@ namespace Paul
                 Selection.objects = childGameObjects.ToArray();
             }
             // If no child objects were found, deselect all.
+            else
+            {
+                Selection.objects = new Object[0];
+            }
+        }
+
+        [MenuItem("Paul/GameObject/Select parents", priority = 100 * (int)LetterAsInteger.G + (int)LetterAsInteger.S)]
+        private static void SelectParents()
+        {
+            GameObject[] selectedGameObjects = Selection.gameObjects;
+            List<GameObject> parentGameObjects = new();
+
+            foreach (GameObject selectedGameObject in selectedGameObjects)
+            {
+                if (selectedGameObject.transform.parent != null)
+                {
+                    parentGameObjects.Add(selectedGameObject.transform.parent.gameObject);
+                }
+            }
+
+            if (parentGameObjects.Count > 0)
+            {
+                Selection.objects = parentGameObjects.ToArray();
+            }
             else
             {
                 Selection.objects = new Object[0];
