@@ -9,7 +9,9 @@ using Object = UnityEngine.Object;
 
 namespace Paul
 {
-    // LetterAsInteger is used to alphabetize menu items
+    /// <summary>
+    /// LetterAsInteger is used to alphabetize menu items.
+    /// </summary>
     public enum LetterAsInteger
     {
         A = 1,
@@ -46,13 +48,12 @@ namespace Paul
 
         private static bool gizmosHidden = false;
 
+        /// <summary>
+        /// Toggle visibility of all Gizmos in the Scene view.
+        /// </summary>
         [MenuItem("Paul/Commands/Hide scene view gizmos", priority = 100 * (int)LetterAsInteger.C + (int)LetterAsInteger.H)]
         private static void HideSceneViewGizmos()
         {
-            /// <summary>
-            /// Toggle visibility of all Gizmos in the Scene view.
-            /// </summary>
-            
             gizmosHidden = !gizmosHidden;
 
             if (SceneView.lastActiveSceneView != null)
@@ -62,13 +63,13 @@ namespace Paul
             }
         }
 
+
+        /// <summary>
+        /// Toggle the Lock Inspector feature.
+        /// </summary>
         [MenuItem("Paul/Commands/Lock Inspector", priority = 100 * (int)LetterAsInteger.C + (int)LetterAsInteger.L)]
         private static void LockInspector()
         {
-            /// <summary>
-            /// Toggle the Lock Inspector feature.
-            /// </summary>
-
             Type type = Assembly.GetAssembly(typeof(Editor)).GetType("UnityEditor.InspectorWindow");
             EditorWindow window = EditorWindow.GetWindow(type);
             PropertyInfo propertyInfo = type.GetProperty("isLocked", BindingFlags.Instance | BindingFlags.Public);
@@ -80,13 +81,12 @@ namespace Paul
 
         #region Game object commands
 
+        /// <summary>
+        /// Alphabetize children of each selected parent game object.
+        /// </summary>
         [MenuItem("Paul/GameObject/Alphabetize children", priority = 100 * (int)LetterAsInteger.G + (int)LetterAsInteger.A)]
         private static void AlphabetizeChildren()
         {
-            /// <summary>
-            /// Alphabetize children of each selected parent game object.
-            /// </summary>
-            
             GameObject[] selectedGameObjects = Selection.gameObjects;
 
             foreach (GameObject parentGameObject in selectedGameObjects)
@@ -105,13 +105,13 @@ namespace Paul
             }
         }
 
+
+        /// <summary>
+        /// Center the parent GameObject to the geometric center of its child objects.
+        /// </summary>
         [MenuItem("Paul/GameObject/Center to geometry", priority = 100 * (int)LetterAsInteger.G + (int)LetterAsInteger.C)]
         private static void CenterToGeometry()
         {
-            /// <summary>
-            /// Center the parent GameObject to the geometric center of its child objects.
-            /// </summary>
-
             GameObject[] selectedObjects = Selection.gameObjects;
 
             foreach (GameObject parentObject in selectedObjects)
@@ -144,13 +144,13 @@ namespace Paul
             }
         }
 
+
+        /// <summary>
+        /// Destroy all colliders on selected game objects.
+        /// </summary>
         [MenuItem("Paul/GameObject/Destroy colliders", priority = (100 * (int)LetterAsInteger.G) + (int)LetterAsInteger.D)]
         private static void DestroyColliders()
         {
-            // <summary>
-            // Destroy all colliders on selected game objects.
-            // </summary>
-
             foreach (GameObject selectedObject in Selection.gameObjects)
             {
                 if (selectedObject.TryGetComponent<Collider>(out var collider))
@@ -160,21 +160,54 @@ namespace Paul
             }
         }
 
-        [MenuItem("Paul/GameObject/Move colliders on top child to parent", priority = (100 * (int)LetterAsInteger.G) + (int)LetterAsInteger.C)]
+
+        /// <summary>
+        /// For each selected parent game object, move colliders on all children to their respective parents.
+        /// </summary>
+        [MenuItem("Paul/GameObject/Move all colliders to parent", priority = (100 * (int)LetterAsInteger.G) + (int)LetterAsInteger.M)]
+        private static void MoveAllCollidersToParent()
+        {
+            foreach (GameObject parentObject in Selection.gameObjects)
+            {
+                Collider[] colliders = parentObject.GetComponentsInChildren<Collider>();
+
+                foreach (Collider collider in colliders)
+                {
+                    if (collider.gameObject == parentObject)
+                    {
+                        continue;
+                    }
+
+                    UnityEditorInternal.ComponentUtility.CopyComponent(collider);
+                    UnityEditorInternal.ComponentUtility.PasteComponentAsNew(parentObject);
+                }
+
+                foreach (Transform child in parentObject.transform)
+                {
+                    Collider[] childColliders = child.GetComponents<Collider>();
+                    foreach (Collider childCollider in childColliders)
+                    {
+                        Undo.DestroyObjectImmediate(childCollider);
+                    }
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// For each selected parent game object, all colliders on the top-level child will 
+        /// be moved to the parent.
+        ///
+        /// This command was made for the following application in mind,
+        /// 
+        /// When dealing with prefabs that have LOD groups, often colliders will exist on 
+        /// the LOD0 game object rather than the root game object in a prefab.If a designer 
+        /// would like to remove LOD components entirely, then this is a way to move colliders 
+        /// to the root game objects in bulk.
+        /// </summary> 
+        [MenuItem("Paul/GameObject/Move colliders on top child to parent", priority = (100 * (int)LetterAsInteger.G) + (int)LetterAsInteger.M)]
         private static void MoveCollidersOnTopChildToParent()
         {
-            /// <summary>
-            /// For each selected parent game object, all colliders on the top-level child will 
-            /// be moved to the parent.
-            ///
-            /// This command was made for the following application in mind,
-            /// 
-            /// When dealing with prefabs that have LOD groups, often colliders will exist on 
-            /// the LOD0 game object rather than the root game object in a prefab.If a designer 
-            /// would like to remove LOD components entirely, then this is a way to move colliders 
-            /// to the root game objects in bulk.
-            /// </summary> 
-
             foreach (GameObject parentObject in Selection.gameObjects)
             {
                 Transform topChild = parentObject.transform.GetChild(0);
@@ -193,13 +226,124 @@ namespace Paul
             }
         }
 
+
+        /// <summary>
+        /// Moves all components on the selected game object's top child to the respective parent.
+        /// The process is undoable.
+        /// </summary>
+        [MenuItem("Paul/GameObject/Move components on top child to parent", priority = 100 * (int)LetterAsInteger.G + (int)LetterAsInteger.M)]
+        private static void MoveComponentsOnTopChildToParent()
+        {            
+            foreach (GameObject parentObject in Selection.gameObjects)
+            {
+                Transform topChild = parentObject.transform.GetChild(0);
+
+                Component[] components = topChild.GetComponents(typeof(Component));
+
+                Debug.Log("Found " + components.Length + " components on " + topChild.name);
+
+                foreach (Component component in components)
+                {
+                    if (component is Transform)
+                    {
+                        continue;
+                    }
+
+                    UnityEditorInternal.ComponentUtility.CopyComponent(component);
+                    UnityEditorInternal.ComponentUtility.PasteComponentAsNew(parentObject);
+                    Undo.DestroyObjectImmediate(component);
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// Paste component from clipboard as new onto the actively selected game object.
+        /// </summary>
+        [MenuItem("Paul/GameObject/Paste component as new", priority = 100 * (int)LetterAsInteger.G + (int)LetterAsInteger.P)]
+        private static void PasteComponentAsNew()
+        {
+            if (Selection.activeGameObject != null)
+            {
+                UnityEditorInternal.ComponentUtility.PasteComponentAsNew(Selection.activeGameObject);
+            }
+            else
+            {
+                Debug.LogWarning("No game object is selected.");
+            }
+        }
+
+
+        /// <summary>
+        /// Rounds the x, y, and z position of selected game objects to the nearest grid value.
+        /// </summary>
+        [MenuItem("Paul/GameObject/Push children to grid", priority = 100 * (int)LetterAsInteger.G + (int)LetterAsInteger.P)]
+        private static void PushChildrenToGrid()
+        {
+            GameObject[] selectedGameObjects = Selection.gameObjects;
+
+            EditorToolboxSettings settings = Resources.Load<EditorToolboxSettings>("EditorToolboxSettings");
+
+            if (settings == null)
+            {
+                Debug.LogWarning("Could not find EditorToolboxSettings resource file.");
+                return;
+            }
+
+            float gridSize = settings.gridSize;
+
+            foreach (GameObject parent in selectedGameObjects)
+            {
+                foreach (Transform child in parent.transform)
+                {
+                    Vector3 position = child.position;
+
+                    float x = gridSize * Mathf.Round(position.x / gridSize);
+                    float y = gridSize * Mathf.Round(position.y / gridSize);
+                    float z = gridSize * Mathf.Round(position.z / gridSize);
+
+                    Undo.RecordObject(child, "Push Child to Grid");
+
+                    child.position = new Vector3(x, y, z);
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// Renames selected GameObjects in the scene hierarchy to the name of their corresponding prefab.
+        /// It does nothing if the selected GameObject is not a prefab instance or not in the scene.
+        /// </summary>
+        [MenuItem("Paul/GameObject/Rename to prefab name", priority = 100 * (int)LetterAsInteger.G + (int)LetterAsInteger.R)]
+        private static void RenameSelectedToPrefabName()
+        {
+            GameObject[] selectedGameObjects = Selection.gameObjects;
+            foreach (GameObject selectedGameObject in selectedGameObjects)
+            {
+                if (selectedGameObject == null || selectedGameObject.scene.name == null)
+                {
+                    continue;
+                }
+
+                PrefabAssetType prefabAssetType = PrefabUtility.GetPrefabAssetType(selectedGameObject);
+                if (prefabAssetType == PrefabAssetType.Regular || prefabAssetType == PrefabAssetType.Variant)
+                {
+                    string prefabPath = PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(selectedGameObject);
+                    string prefabName = System.IO.Path.GetFileNameWithoutExtension(prefabPath);
+
+                    Undo.RecordObject(selectedGameObject, "Rename to Prefab Name");
+                    selectedGameObject.name = prefabName;
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// Sets the local transform position of selected objects to (0, 0, 0).
+        /// </summary>
         [MenuItem("Paul/GameObject/Reset local transform position", priority = 100 * (int)LetterAsInteger.G + (int)LetterAsInteger.R)]
         private static void ResetLocalTransformPosition()
         {
-            /// <summary>
-            /// Sets the local transform position of selected objects to (0, 0, 0).
-            /// </summary>
-
             GameObject[] selectedObjects = Selection.gameObjects;
 
             if (selectedObjects.Length == 0)
@@ -217,13 +361,13 @@ namespace Paul
             EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
         }
 
+
+        /// <summary>
+        /// Select children of selected game objects while deselecting the current selection.
+        /// </summary>
         [MenuItem("Paul/GameObject/Select children", priority = 100 * (int)LetterAsInteger.G + (int)LetterAsInteger.S)]
         private static void SelectChildren()
         {
-            /// <summary>
-            /// Select children of selected game objects while deselecting the current selection.
-            /// </summary>
-
             GameObject[] selectedGameObjects = Selection.gameObjects;
             List<GameObject> childGameObjects = new();
 
@@ -250,13 +394,13 @@ namespace Paul
             }
         }
 
+
+        /// <summary>
+        /// Select parents of selected game objects while deselecting the current selection.
+        /// </summary>
         [MenuItem("Paul/GameObject/Select parents", priority = 100 * (int)LetterAsInteger.G + (int)LetterAsInteger.S)]
         private static void SelectParents()
         {
-            /// <summary>
-            /// Select parents of selected game objects while deselecting the current selection.
-            /// </summary>
-
             GameObject[] selectedGameObjects = Selection.gameObjects;
             List<GameObject> parentGameObjects = new();
 
