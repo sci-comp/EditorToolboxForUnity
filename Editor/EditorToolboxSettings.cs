@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Paul
+namespace EditorToolbox
 {
     [CreateAssetMenu(fileName = "EditorToolboxSettings", menuName = "ScriptableObjects/EditorToolbox/Settings", order = 1)]
     public class EditorToolboxSettings : ScriptableObject

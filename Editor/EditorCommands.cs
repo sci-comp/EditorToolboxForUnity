@@ -7,7 +7,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace Paul
+namespace EditorToolbox
 {
     /// <summary>
     /// LetterAsInteger is used to alphabetize menu items.
@@ -42,6 +42,21 @@ namespace Paul
         Z = 26
     }
 
+    /// <summary>
+    /// Used to store transient data while performing transform operations.
+    /// </summary>
+    public struct TransformData
+    {
+        public Vector3 Position { get; }
+        public Quaternion Rotation { get; }
+
+        public TransformData(Vector3 position, Quaternion rotation)
+        {
+            Position = position;
+            Rotation = rotation;
+        }
+    }
+
     public static class EditorCommands
     {
         #region General commands
@@ -51,7 +66,7 @@ namespace Paul
         /// <summary>
         /// Toggle visibility of all Gizmos in the Scene view.
         /// </summary>
-        [MenuItem("Paul/Commands/Hide scene view gizmos", priority = 100 * (int)LetterAsInteger.C + (int)LetterAsInteger.H)]
+        [MenuItem("Editor Toolbox/Commands/Hide scene view gizmos", priority = 100 * (int)LetterAsInteger.C + (int)LetterAsInteger.H)]
         private static void HideSceneViewGizmos()
         {
             gizmosHidden = !gizmosHidden;
@@ -67,7 +82,7 @@ namespace Paul
         /// <summary>
         /// Toggle the Lock Inspector feature.
         /// </summary>
-        [MenuItem("Paul/Commands/Lock Inspector", priority = 100 * (int)LetterAsInteger.C + (int)LetterAsInteger.L)]
+        [MenuItem("Editor Toolbox/Commands/Lock Inspector", priority = 100 * (int)LetterAsInteger.C + (int)LetterAsInteger.L)]
         private static void LockInspector()
         {
             Type type = Assembly.GetAssembly(typeof(Editor)).GetType("UnityEditor.InspectorWindow");
@@ -79,18 +94,24 @@ namespace Paul
 
         #endregion
 
-        #region Game object commands
+        #region Scene commands
 
         /// <summary>
         /// Alphabetize children of each selected parent game object.
         /// </summary>
-        [MenuItem("Paul/GameObject/Alphabetize children", priority = 100 * (int)LetterAsInteger.G + (int)LetterAsInteger.A)]
+        [MenuItem("Editor Toolbox/Scene/Alphabetize children", priority = 100 * (int)LetterAsInteger.G + (int)LetterAsInteger.A)]
         private static void AlphabetizeChildren()
         {
             GameObject[] selectedGameObjects = Selection.gameObjects;
 
             foreach (GameObject parentGameObject in selectedGameObjects)
             {
+                if (!parentGameObject.scene.isLoaded)
+                {
+                    Debug.LogWarning("This method only works for scene objects. Retuning.");
+                    return;
+                }
+
                 Transform[] childTransforms = parentGameObject.GetComponentsInChildren<Transform>();
                 childTransforms = childTransforms.Where(t => t != parentGameObject.transform).ToArray();
 
@@ -109,14 +130,20 @@ namespace Paul
         /// <summary>
         /// Center the parent GameObject to the geometric center of its child objects.
         /// </summary>
-        [MenuItem("Paul/GameObject/Center to geometry", priority = 100 * (int)LetterAsInteger.G + (int)LetterAsInteger.C)]
+        [MenuItem("Editor Toolbox/Scene/Center to geometry", priority = 100 * (int)LetterAsInteger.G + (int)LetterAsInteger.C)]
         private static void CenterToGeometry()
         {
             GameObject[] selectedObjects = Selection.gameObjects;
 
-            foreach (GameObject parentObject in selectedObjects)
+            foreach (GameObject parentGameObject in selectedObjects)
             {
-                int childCount = parentObject.transform.childCount;
+                if (!parentGameObject.scene.isLoaded)
+                {
+                    Debug.LogWarning("This method only works for scene objects. Retuning.");
+                    return;
+                }
+
+                int childCount = parentGameObject.transform.childCount;
 
                 if (childCount == 0)
                 {
@@ -127,18 +154,18 @@ namespace Paul
 
                 for (int i = 0; i < childCount; i++)
                 {
-                    Transform childTransform = parentObject.transform.GetChild(i);
+                    Transform childTransform = parentGameObject.transform.GetChild(i);
                     sumPositions += childTransform.position;
                 }
 
                 Vector3 centerOfMass = sumPositions / childCount;
-                Vector3 oldPosition = parentObject.transform.position;
+                Vector3 oldPosition = parentGameObject.transform.position;
 
-                parentObject.transform.position = centerOfMass;
+                parentGameObject.transform.position = centerOfMass;
 
                 for (int i = 0; i < childCount; i++)
                 {
-                    Transform childTransform = parentObject.transform.GetChild(i);
+                    Transform childTransform = parentGameObject.transform.GetChild(i);
                     childTransform.position += oldPosition - centerOfMass;
                 }
             }
@@ -148,12 +175,18 @@ namespace Paul
         /// <summary>
         /// Destroy all colliders on selected game objects.
         /// </summary>
-        [MenuItem("Paul/GameObject/Destroy colliders", priority = (100 * (int)LetterAsInteger.G) + (int)LetterAsInteger.D)]
+        [MenuItem("Editor Toolbox/Scene/Destroy colliders", priority = (100 * (int)LetterAsInteger.G) + (int)LetterAsInteger.D)]
         private static void DestroyColliders()
         {
-            foreach (GameObject selectedObject in Selection.gameObjects)
+            foreach (GameObject selectedGameObject in Selection.gameObjects)
             {
-                if (selectedObject.TryGetComponent<Collider>(out var collider))
+                if (!selectedGameObject.scene.isLoaded)
+                {
+                    Debug.LogWarning("This method only works for scene objects. Retuning.");
+                    return;
+                }
+
+                if (selectedGameObject.TryGetComponent<Collider>(out var collider))
                 {
                     Undo.DestroyObjectImmediate(collider);
                 }
@@ -164,25 +197,31 @@ namespace Paul
         /// <summary>
         /// For each selected parent game object, move colliders on all children to their respective parents.
         /// </summary>
-        [MenuItem("Paul/GameObject/Move all colliders to parent", priority = (100 * (int)LetterAsInteger.G) + (int)LetterAsInteger.M)]
+        [MenuItem("Editor Toolbox/Scene/Move all colliders to parent", priority = (100 * (int)LetterAsInteger.G) + (int)LetterAsInteger.M)]
         private static void MoveAllCollidersToParent()
         {
-            foreach (GameObject parentObject in Selection.gameObjects)
+            foreach (GameObject parentGameObject in Selection.gameObjects)
             {
-                Collider[] colliders = parentObject.GetComponentsInChildren<Collider>();
+                if (!parentGameObject.scene.isLoaded)
+                {
+                    Debug.LogWarning("This method only works for scene objects. Retuning.");
+                    return;
+                }
+
+                Collider[] colliders = parentGameObject.GetComponentsInChildren<Collider>();
 
                 foreach (Collider collider in colliders)
                 {
-                    if (collider.gameObject == parentObject)
+                    if (collider.gameObject == parentGameObject)
                     {
                         continue;
                     }
 
                     UnityEditorInternal.ComponentUtility.CopyComponent(collider);
-                    UnityEditorInternal.ComponentUtility.PasteComponentAsNew(parentObject);
+                    UnityEditorInternal.ComponentUtility.PasteComponentAsNew(parentGameObject);
                 }
 
-                foreach (Transform child in parentObject.transform)
+                foreach (Transform child in parentGameObject.transform)
                 {
                     Collider[] childColliders = child.GetComponents<Collider>();
                     foreach (Collider childCollider in childColliders)
@@ -205,24 +244,34 @@ namespace Paul
         /// would like to remove LOD components entirely, then this is a way to move colliders 
         /// to the root game objects in bulk.
         /// </summary> 
-        [MenuItem("Paul/GameObject/Move colliders on top child to parent", priority = (100 * (int)LetterAsInteger.G) + (int)LetterAsInteger.M)]
+        [MenuItem("Editor Toolbox/Scene/Move colliders on top child to parent", priority = (100 * (int)LetterAsInteger.G) + (int)LetterAsInteger.M)]
         private static void MoveCollidersOnTopChildToParent()
         {
-            foreach (GameObject parentObject in Selection.gameObjects)
+            foreach (GameObject parentGameObject in Selection.gameObjects)
             {
-                Transform topChild = parentObject.transform.GetChild(0);
-                Collider[] colliders = topChild.GetComponents<Collider>();
-
-                foreach (Collider collider in colliders)
+                if (!parentGameObject.scene.isLoaded)
                 {
-                    if (collider.transform.parent == parentObject.transform)
-                    {
-                        Undo.RecordObject(parentObject, "Move Collider to Parent");
-                        UnityEditorInternal.ComponentUtility.CopyComponent(collider);
-                        UnityEditorInternal.ComponentUtility.PasteComponentAsNew(parentObject);
-                        Undo.DestroyObjectImmediate(collider);
-                    }
+                    Debug.LogWarning("This method only works for scene objects. Retuning.");
+                    return;
                 }
+
+                Transform topChild = parentGameObject.transform.GetChild(0);
+
+                if (topChild != null)
+                {
+                    Collider[] colliders = topChild.GetComponents<Collider>();
+
+                    foreach (Collider collider in colliders)
+                    {
+                        if (collider.transform.parent == parentGameObject.transform)
+                        {
+                            Undo.RecordObject(parentGameObject, "Move Collider to Parent");
+                            UnityEditorInternal.ComponentUtility.CopyComponent(collider);
+                            UnityEditorInternal.ComponentUtility.PasteComponentAsNew(parentGameObject);
+                            Undo.DestroyObjectImmediate(collider);
+                        }
+                    }
+                }                
             }
         }
 
@@ -231,12 +280,18 @@ namespace Paul
         /// Moves all components on the selected game object's top child to the respective parent.
         /// The process is undoable.
         /// </summary>
-        [MenuItem("Paul/GameObject/Move components on top child to parent", priority = 100 * (int)LetterAsInteger.G + (int)LetterAsInteger.M)]
+        [MenuItem("Editor Toolbox/Scene/Move components on top child to parent", priority = 100 * (int)LetterAsInteger.G + (int)LetterAsInteger.M)]
         private static void MoveComponentsOnTopChildToParent()
         {            
-            foreach (GameObject parentObject in Selection.gameObjects)
+            foreach (GameObject parentGameObject in Selection.gameObjects)
             {
-                Transform topChild = parentObject.transform.GetChild(0);
+                if (!parentGameObject.scene.isLoaded)
+                {
+                    Debug.LogWarning("This method only works for scene objects. Retuning.");
+                    return;
+                }
+
+                Transform topChild = parentGameObject.transform.GetChild(0);
 
                 Component[] components = topChild.GetComponents(typeof(Component));
 
@@ -250,7 +305,7 @@ namespace Paul
                     }
 
                     UnityEditorInternal.ComponentUtility.CopyComponent(component);
-                    UnityEditorInternal.ComponentUtility.PasteComponentAsNew(parentObject);
+                    UnityEditorInternal.ComponentUtility.PasteComponentAsNew(parentGameObject);
                     Undo.DestroyObjectImmediate(component);
                 }
             }
@@ -260,16 +315,16 @@ namespace Paul
         /// <summary>
         /// Paste component from clipboard as new onto the actively selected game object.
         /// </summary>
-        [MenuItem("Paul/GameObject/Paste component as new", priority = 100 * (int)LetterAsInteger.G + (int)LetterAsInteger.P)]
+        [MenuItem("Editor Toolbox/Scene/Paste component as new", priority = 100 * (int)LetterAsInteger.G + (int)LetterAsInteger.P)]
         private static void PasteComponentAsNew()
         {
-            if (Selection.activeGameObject != null)
+            if (Selection.activeGameObject != null && Selection.activeGameObject.scene.isLoaded)
             {
-                UnityEditorInternal.ComponentUtility.PasteComponentAsNew(Selection.activeGameObject);
+                UnityEditorInternal.ComponentUtility.PasteComponentAsNew(Selection.activeGameObject);                
             }
             else
             {
-                Debug.LogWarning("No game object is selected.");
+                Debug.Log("Scene object not selected, returning.");
             }
         }
 
@@ -277,7 +332,7 @@ namespace Paul
         /// <summary>
         /// Rounds the x, y, and z position of selected game objects to the nearest grid value.
         /// </summary>
-        [MenuItem("Paul/GameObject/Push children to grid", priority = 100 * (int)LetterAsInteger.G + (int)LetterAsInteger.P)]
+        [MenuItem("Editor Toolbox/Scene/Push children to grid", priority = 100 * (int)LetterAsInteger.G + (int)LetterAsInteger.P)]
         private static void PushChildrenToGrid()
         {
             GameObject[] selectedGameObjects = Selection.gameObjects;
@@ -292,9 +347,15 @@ namespace Paul
 
             float gridSize = settings.gridSize;
 
-            foreach (GameObject parent in selectedGameObjects)
+            foreach (GameObject parentGameObject in selectedGameObjects)
             {
-                foreach (Transform child in parent.transform)
+                if (!parentGameObject.scene.isLoaded)
+                {
+                    Debug.LogWarning("This method only works for scene objects. Retuning.");
+                    return;
+                }
+
+                foreach (Transform child in parentGameObject.transform)
                 {
                     Vector3 position = child.position;
 
@@ -314,25 +375,99 @@ namespace Paul
         /// Renames selected GameObjects in the scene hierarchy to the name of their corresponding prefab.
         /// It does nothing if the selected GameObject is not a prefab instance or not in the scene.
         /// </summary>
-        [MenuItem("Paul/GameObject/Rename to prefab name", priority = 100 * (int)LetterAsInteger.G + (int)LetterAsInteger.R)]
-        private static void RenameSelectedToPrefabName()
+        [MenuItem("Editor Toolbox/Scene/Rename to prefab name", priority = 100 * (int)LetterAsInteger.G + (int)LetterAsInteger.R)]
+        private static void RenameToPrefabName()
         {
             GameObject[] selectedGameObjects = Selection.gameObjects;
             foreach (GameObject selectedGameObject in selectedGameObjects)
             {
-                if (selectedGameObject == null || selectedGameObject.scene.name == null)
+                if (!selectedGameObject.scene.isLoaded)
                 {
-                    continue;
+                    Debug.LogWarning("This method only works for scene objects. Retuning.");
+                    return;
                 }
 
-                PrefabAssetType prefabAssetType = PrefabUtility.GetPrefabAssetType(selectedGameObject);
-                if (prefabAssetType == PrefabAssetType.Regular || prefabAssetType == PrefabAssetType.Variant)
+                if (selectedGameObject != null)
                 {
-                    string prefabPath = PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(selectedGameObject);
-                    string prefabName = System.IO.Path.GetFileNameWithoutExtension(prefabPath);
+                    PrefabAssetType prefabAssetType = PrefabUtility.GetPrefabAssetType(selectedGameObject);
+                    if (prefabAssetType == PrefabAssetType.Regular || prefabAssetType == PrefabAssetType.Variant)
+                    {
+                        string prefabPath = PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(selectedGameObject);
+                        string prefabName = System.IO.Path.GetFileNameWithoutExtension(prefabPath);
 
-                    Undo.RecordObject(selectedGameObject, "Rename to Prefab Name");
-                    selectedGameObject.name = prefabName;
+                        Undo.RecordObject(selectedGameObject, "Rename to Prefab Name");
+                        selectedGameObject.name = prefabName;
+                    }
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// Resets the position of selected parent game objects while maintaining the global position of their children.
+        /// </summary>
+        [MenuItem("Editor Toolbox/Scene/Reset category transform position", priority = 100 * (int)LetterAsInteger.G + (int)LetterAsInteger.R)]
+        private static void ResetCategoryTransformPosition()
+        {
+            var selectedGameObjects = Selection.gameObjects;
+
+            foreach (GameObject parentGameObject in selectedGameObjects)
+            {
+                if (!parentGameObject.scene.isLoaded)
+                {
+                    Debug.LogWarning("This method only works for scene objects. Retuning.");
+                    return;
+                }
+
+                var childPositions = new List<KeyValuePair<Transform, Vector3>>();
+
+                for (int i = 0; i < parentGameObject.transform.childCount; i++)
+                {
+                    Transform child = parentGameObject.transform.GetChild(i);
+                    Vector3 position = child.position;
+                    childPositions.Add(new KeyValuePair<Transform, Vector3>(child, position));
+                }
+
+                parentGameObject.transform.localPosition = Vector3.zero;
+
+                foreach (var childPosition in childPositions)
+                {
+                    childPosition.Key.position = childPosition.Value;
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// Resets the local rotation of selected GameObjects in the scene to identity
+        /// while preserving the global rotation and position of their child GameObjects.
+        /// </summary>
+        [MenuItem("Editor Toolbox/Scene/Reset category transform rotation", priority = 100 * (int)LetterAsInteger.G + (int)LetterAsInteger.R)]
+        private static void ResetCategoryTransformRotation()
+        {
+            var selectedGameObjects = Selection.gameObjects;
+            foreach (GameObject parentGameObject in selectedGameObjects)
+            {
+                if (!parentGameObject.scene.isLoaded)
+                {
+                    Debug.LogWarning("This method only works for scene objects. Retuning.");
+                    return;
+                }
+
+                var childTransforms = new List<TransformData>();
+
+                for (int i = 0; i < parentGameObject.transform.childCount; i++)
+                {
+                    Transform childTransform = parentGameObject.transform.GetChild(i);
+                    childTransforms.Add(new TransformData(childTransform.position, childTransform.rotation));
+                }
+
+                parentGameObject.transform.localRotation = Quaternion.identity;
+
+                for (int i = 0; i < childTransforms.Count; i++)
+                {
+                    Transform childTransform = parentGameObject.transform.GetChild(i);
+                    childTransform.SetPositionAndRotation(childTransforms[i].Position, childTransforms[i].Rotation);
                 }
             }
         }
@@ -341,21 +476,21 @@ namespace Paul
         /// <summary>
         /// Sets the local transform position of selected objects to (0, 0, 0).
         /// </summary>
-        [MenuItem("Paul/GameObject/Reset local transform position", priority = 100 * (int)LetterAsInteger.G + (int)LetterAsInteger.R)]
+        [MenuItem("Editor Toolbox/Scene/Reset local transform position", priority = 100 * (int)LetterAsInteger.G + (int)LetterAsInteger.R)]
         private static void ResetLocalTransformPosition()
         {
-            GameObject[] selectedObjects = Selection.gameObjects;
+            GameObject[] selectedGameObjects = Selection.gameObjects;
 
-            if (selectedObjects.Length == 0)
+            foreach (GameObject selectedGameObject in selectedGameObjects)
             {
-                Debug.LogWarning("No objects selected. Operation not performed.");
-                return;
-            }
+                if (!selectedGameObject.scene.isLoaded)
+                {
+                    Debug.LogWarning("This method only works for scene objects. Retuning.");
+                    return;
+                }
 
-            foreach (GameObject obj in selectedObjects)
-            {
-                Undo.RecordObject(obj.transform, "Reset local transform position");
-                obj.transform.localPosition = Vector3.zero;
+                Undo.RecordObject(selectedGameObject.transform, "Reset local transform position");
+                selectedGameObject.transform.localPosition = Vector3.zero;
             }
 
             EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
@@ -363,9 +498,34 @@ namespace Paul
 
 
         /// <summary>
+        /// Reverses the sibling order of the children of selected game objects in the hierarchy.
+        /// </summary>
+        [MenuItem("Editor Toolbox/Scene/Reverse sibling order", priority = (100 * (int)LetterAsInteger.G) + (int)LetterAsInteger.R)]
+        private static void ReverseSiblingOrder()
+        {
+            foreach (GameObject parentGameObject in Selection.gameObjects)
+            {
+                if (!parentGameObject.scene.isLoaded)
+                {
+                    Debug.LogWarning("This method only works for scene objects. Retuning.");
+                    return;
+                }
+
+                int count = parentGameObject.transform.childCount;
+
+                for (int i = 0; i < count / 2; i++)
+                {
+                    var child = parentGameObject.transform.GetChild(i);
+                    child.SetSiblingIndex(count - i - 1);
+                }
+            }
+        }
+
+
+        /// <summary>
         /// Select children of selected game objects while deselecting the current selection.
         /// </summary>
-        [MenuItem("Paul/GameObject/Select children", priority = 100 * (int)LetterAsInteger.G + (int)LetterAsInteger.S)]
+        [MenuItem("Editor Toolbox/Scene/Select children", priority = 100 * (int)LetterAsInteger.G + (int)LetterAsInteger.S)]
         private static void SelectChildren()
         {
             GameObject[] selectedGameObjects = Selection.gameObjects;
@@ -373,6 +533,12 @@ namespace Paul
 
             foreach (GameObject selectedGameObject in selectedGameObjects)
             {
+                if (!selectedGameObject.scene.isLoaded)
+                {
+                    Debug.LogWarning("This method only works for scene objects. Retuning.");
+                    return;
+                }
+
                 if (selectedGameObject.transform.childCount > 0)
                 {
                     foreach (Transform child in selectedGameObject.transform)
@@ -398,7 +564,7 @@ namespace Paul
         /// <summary>
         /// Select parents of selected game objects while deselecting the current selection.
         /// </summary>
-        [MenuItem("Paul/GameObject/Select parents", priority = 100 * (int)LetterAsInteger.G + (int)LetterAsInteger.S)]
+        [MenuItem("Editor Toolbox/Scene/Select parents", priority = 100 * (int)LetterAsInteger.G + (int)LetterAsInteger.S)]
         private static void SelectParents()
         {
             GameObject[] selectedGameObjects = Selection.gameObjects;
@@ -406,6 +572,12 @@ namespace Paul
 
             foreach (GameObject selectedGameObject in selectedGameObjects)
             {
+                if (!selectedGameObject.scene.isLoaded)
+                {
+                    Debug.LogWarning("This method only works for scene objects. Retuning.");
+                    return;
+                }
+
                 if (selectedGameObject.transform.parent != null)
                 {
                     parentGameObjects.Add(selectedGameObject.transform.parent.gameObject);
@@ -419,6 +591,40 @@ namespace Paul
             else
             {
                 Selection.objects = new Object[0];
+            }
+        }
+
+
+        /// <summary>
+        /// Toggles the active status of selected GameObjects in the hierarchy.
+        /// </summary>
+        [MenuItem("Editor Toolbox/Scene/Toggle active status", priority = 100 * (int)LetterAsInteger.G + (int)LetterAsInteger.T)]
+        private static void ToggleActiveStatus()
+        {
+            GameObject[] selectedGameObjects = Selection.gameObjects;
+
+            if (selectedGameObjects.Length > 0)
+            {
+                if (selectedGameObjects[0].scene.name == null)
+                {
+                    return;
+                }
+
+                bool isActive = selectedGameObjects[0].activeSelf;
+
+                foreach (GameObject selectedGameObject in selectedGameObjects)
+                {
+                    if (!selectedGameObject.scene.isLoaded)
+                    {
+                        Debug.LogWarning("This method only works for scene objects. Retuning.");
+                        return;
+                    }
+
+                    Undo.RecordObject(selectedGameObject, "Toggle Active Status");
+                    selectedGameObject.SetActive(!isActive);
+                }
+
+                EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
             }
         }
 

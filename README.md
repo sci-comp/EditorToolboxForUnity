@@ -22,4 +22,4 @@ Move the contents of ./Editor/ into any Editor folder within your project. Note 
 
 ## Guide
 
-Unfontunately, we cannot include tooltips in the toolbar with [MenuItem] attributes. If you need to know more about a command, please open up EditorCommands.cs in your favorite text edit, press "Ctrl + F" to search the relevant command name, then read the <summary> information. Documentation will be generated soon.
+Unfontunately, we cannot include tooltips in the toolbar with [MenuItem] attributes. If you need to know more about a command, please open up EditorCommands.cs in your favorite text edit, press "Ctrl + F" to search the relevant command name, then read the summary information. Documentation will be generated soon.
