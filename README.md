@@ -1,7 +1,11 @@
 # com.paul.editor-toolbox
 
-A collection of useful Editor commands for Unity3d.
+A collection of useful Editor commands and utilities for Unity3d.
 
-Every script contains a single command, and has no dependencies.
+All Editor commands here make use of Unity's [MenuItem] attribute, which makes them available in the toolbar. 
 
-Every command here Unity's [MenuItem] attribute. A neat feature of the [MenuItem] attribute is that we can assign these commands hotkeys through Edit -> Shortcuts. The user must assign hotkeys.
+A additional feature of the [MenuItem] attribute is that we can assign hotkeys to our commands by going to Edit -> Shortcuts. 
+
+Though it takes a bit of time assigning shortcuts and clearing conflicts, this set of editor commands is designed to be a helpful productivity boost for those who like having a access to a wide range of shortcuts.
+
+(todo: suggest an initial layout)
