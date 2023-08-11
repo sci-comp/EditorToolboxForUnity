@@ -6,5 +6,6 @@ namespace EditorToolbox
     public class EditorToolboxSettings : ScriptableObject
     {
         public float gridSize = 0.25f;
+        public string screenshotFolder = "Screenshots";
     }
 }

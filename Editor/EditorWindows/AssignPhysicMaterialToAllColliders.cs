@@ -12,7 +12,7 @@ namespace EditorToolbox
         /// Used to set a physics material onto all selected GameObjects' colliders.
         /// Optionally, set the physics material to child colliders as well.
         /// </summary>
-        [MenuItem("Editor Toolbox/Scene/Assign physic material to all colliders", priority = (100 * (int)LetterAsInteger.G) + (int)LetterAsInteger.S)]
+        [MenuItem("Editor Toolbox/Scene/Assign physic material to all colliders", priority = (100 * (int)LetterAsInteger.S) + (int)LetterAsInteger.A)]
         public static void ShowWindow()
         {
             GetWindow<AssignPhysicMaterialToAllColliders>("Set Physic Material");

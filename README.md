@@ -4,17 +4,27 @@
 
 This is a collection of Editor commands and utilities for Unity3d.
 
-All Editor commands here make use of Unity's [MenuItem] attribute, which makes them available in the toolbar. 
-
 I currently maintain this in version 2022.3.5f1 URP, though it should be fine for many other versions of Unity as well.
+
+## Usage
 
 ![plot](./Documentation/Image/Menu.png)
 
-An additional feature of the [MenuItem] attribute is that we can assign hotkeys to our commands by going to Edit -> Shortcuts. 
-
-Though it takes a bit of time assigning shortcuts and clearing conflicts, this set of editor commands is designed to be a helpful productivity boost for those who like having access to a wide range of shortcuts.
+All Editor commands make use of Unity's [MenuItem] attribute, which makes them available in the toolbar. 
 
 ![plot](./Documentation/Image/Shortcuts.png)
+
+An additional feature of the [MenuItem] attribute is that we can assign hotkeys to our commands by going to Edit -> Shortcuts. 
+
+Though assigning shortcuts and clearing conflicts takes a bit of time, this set of editor commands is designed to be a helpful productivity boost for those who like having access to a wide range of shortcuts.
+
+![plot](./Documentation/Image/Search.png)
+
+We can also use Unity's search window as a way to run commands.
+
+![plot](./Documentation/Image/Context.png)
+
+One final way to run commands is to right click on game objects in the scene.
 
 ## Installation
 

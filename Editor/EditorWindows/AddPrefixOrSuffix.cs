@@ -6,16 +6,16 @@ namespace EditorToolbox
     /// <summary>
     /// Editor window class that allows the user to add a prefix or suffix to the names of selected GameObjects or Assets.
     /// </summary>
-    public class AddPrefixOrSuffixEditor : EditorWindow
+    public class AddPrefixOrSuffix : EditorWindow
     {
         private string InputText = "";
         private bool isSuffix = false;
         private bool isFocused;
 
-        [MenuItem("Editor Toolbox/Asset/Add prefix or suffix", priority = 100 * (int)LetterAsInteger.O + (int)LetterAsInteger.A)]
+        [MenuItem("Editor Toolbox/Asset/Add prefix or suffix", priority = 100 * (int)LetterAsInteger.A + (int)LetterAsInteger.A)]
         public static void ShowWindow()
         {
-            GetWindow(typeof(AddPrefixOrSuffixEditor));
+            GetWindow(typeof(AddPrefixOrSuffix));
         }
 
         private void OnGUI()
