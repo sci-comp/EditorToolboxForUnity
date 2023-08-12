@@ -18,8 +18,8 @@ namespace EditorToolbox
         public string meshCollectionPath;
         public List<GameObject> prefabs;
 
-        [MenuItem("Editor Toolbox/Asset/Assign mesh to mesh filters", priority = (100 * (int)LetterAsInteger.A) + (int)LetterAsInteger.A)]
-        [MenuItem("GameObject/Editor Toolbox/Asset/Assign mesh to mesh filters", priority = (100 * (int)LetterAsInteger.A) + (int)LetterAsInteger.A)]
+        [MenuItem("Editor Toolbox/Asset/Assign mesh collection to mesh filters", priority = (100 * (int)LetterAsInteger.A) + (int)LetterAsInteger.A)]
+        [MenuItem("GameObject/Editor Toolbox/Asset/Assign mesh collection to mesh filters", priority = (100 * (int)LetterAsInteger.A) + (int)LetterAsInteger.A)]
         public static void ShowWindow()
         {
             GetWindow<AssignMeshCollectionToMeshFilters>("Assign Mesh To Mesh Filters");

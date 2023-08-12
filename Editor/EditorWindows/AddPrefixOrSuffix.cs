@@ -4,7 +4,8 @@ using UnityEditor;
 namespace EditorToolbox
 {
     /// <summary>
-    /// Editor window class that allows the user to add a prefix or suffix to the names of selected GameObjects or Assets.
+    /// Editor window class that allows the user to add a prefix or suffix to the 
+    /// names of selected GameObjects or Assets.
     /// </summary>
     public class AddPrefixOrSuffix : EditorWindow
     {
@@ -64,11 +65,18 @@ namespace EditorToolbox
             {
                 string newName = isSuffix ? selectedObject.name + InputText : InputText + selectedObject.name;
                 string path = AssetDatabase.GetAssetPath(selectedObject);
-                string newPath = path.Replace(selectedObject.name + ".", newName + ".");
+                string newPath = path.Replace(selectedObject.name, newName);
 
                 Object oldAtPath = AssetDatabase.LoadAssetAtPath<Object>(newPath);
                 if (oldAtPath && oldAtPath != selectedObject)
+                {
                     AssetDatabase.RenameAsset(newPath, oldAtPath.name + InputText);
+                }
+
+                if (AssetDatabase.Contains(selectedObject))
+                {
+                    AssetDatabase.MoveAsset(path, newPath);
+                }
 
                 if (selectedObject is GameObject go)
                 {
@@ -79,11 +87,6 @@ namespace EditorToolbox
                 {
                     Undo.RecordObject(selectedObject, "Rename Asset");
                     selectedObject.name = newName;
-                }
-
-                if (AssetDatabase.Contains(selectedObject))
-                {
-                    AssetDatabase.RenameAsset(path, selectedObject.name);
                 }
             }
 

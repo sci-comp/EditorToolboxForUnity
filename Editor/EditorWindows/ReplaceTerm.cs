@@ -69,12 +69,11 @@ namespace EditorToolbox
                 {
                     string newName = selectedObject.name.Replace(TermToReplace, ReplaceWith);
                     string path = AssetDatabase.GetAssetPath(selectedObject);
-                    string newPath = path.Replace(selectedObject.name + ".", newName + ".");
+                    string newPath = path.Replace(TermToReplace, ReplaceWith);
 
-                    Object oldAtPath = AssetDatabase.LoadAssetAtPath<Object>(newPath);
-                    if (oldAtPath && oldAtPath != selectedObject)
+                    if (AssetDatabase.Contains(selectedObject) && path != newPath)
                     {
-                        AssetDatabase.RenameAsset(newPath, oldAtPath.name + TermToReplace);
+                        AssetDatabase.MoveAsset(path, newPath);
                     }
 
                     if (selectedObject is GameObject go)
@@ -87,11 +86,6 @@ namespace EditorToolbox
                         Undo.RecordObject(selectedObject, "Rename Asset");
                         selectedObject.name = newName;
                     }
-
-                    if (AssetDatabase.Contains(selectedObject))
-                    {
-                        AssetDatabase.RenameAsset(path, newName);
-                    }
                 }
             }
 
@@ -99,6 +93,8 @@ namespace EditorToolbox
             AssetDatabase.Refresh();
             Close();
         }
+
+
     }
 }
 
