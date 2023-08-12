@@ -21,10 +21,15 @@ namespace EditorToolbox
             GUILayout.Label("Prefix:", EditorStyles.boldLabel);
             prefix = EditorGUILayout.TextField(prefix);
 
-            if (GUILayout.Button("Rename"))
+            if (GUILayout.Button("Rename") || IsEnterKeyPressed())
             {
                 RenameSelectedObjects();
             }
+        }
+
+        private bool IsEnterKeyPressed()
+        {
+            return Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Return;
         }
 
         private void RenameSelectedObjects()
@@ -45,8 +50,11 @@ namespace EditorToolbox
 
                 if (!string.IsNullOrEmpty(newName))
                 {
+                    string path = AssetDatabase.GetAssetPath(obj);
+                    string newPath = path.Replace(oldName, newName);
+
+                    AssetDatabase.MoveAsset(path, newPath);
                     obj.name = newName;
-                    AssetDatabase.RenameAsset(AssetDatabase.GetAssetPath(obj), newName);
                 }
             }
 
@@ -72,6 +80,7 @@ namespace EditorToolbox
 
             return new string(nameChars);
         }
+
     }
 }
 
