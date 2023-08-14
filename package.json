@@ -1,0 +1,17 @@
+{
+  "name": "com.boxd20.editor-toolbox",
+  "displayName": "Editor Toolbox",
+  "version": "0.0.1",
+  "author": {
+    "name": "Paul Hill",
+    "email": "arr.explore@gmail.com",
+    "url": "https://github.com/sci-comp"
+  },
+  "unity": "2022.3",
+  "description": "This is a collection of editor tools.",
+  "keywords": [
+    "Editor", "Unity", "Tools", "C#", "MIT"
+  ],
+  "documentationUrl": "https://github.com/sci-comp/EditorToolbox/",
+  "type": "tool"
+}
