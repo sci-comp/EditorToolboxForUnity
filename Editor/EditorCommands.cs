@@ -6,6 +6,7 @@ using System.Reflection;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
 namespace EditorToolbox
@@ -119,13 +120,130 @@ namespace EditorToolbox
 
         #endregion
 
+        #region Revert scene components
+
+        [MenuItem("Editor Toolbox/Scene/Revert selected components/Animator")]
+        public static void RevertSelectedAnimatorComponents()
+        {
+            RevertSelectedComponentsToPrefab<Animator>();
+        }
+
+        [MenuItem("Editor Toolbox/Scene/Revert selected components/AudioSource")]
+        public static void RevertSelectedAudioSourceComponents()
+        {
+            RevertSelectedComponentsToPrefab<AudioSource>();
+        }
+
+        [MenuItem("Editor Toolbox/Scene/Revert selected components/AudioListener")]
+        public static void RevertSelectedAudioListenerComponents()
+        {
+            RevertSelectedComponentsToPrefab<AudioListener>();
+        }
+
+        [MenuItem("Editor Toolbox/Scene/Revert selected components/Camera")]
+        public static void RevertSelectedCameraComponents()
+        {
+            RevertSelectedComponentsToPrefab<Camera>();
+        }
+
+        [MenuItem("Editor Toolbox/Scene/Revert selected components/Image")]
+        public static void RevertSelectedImageComponents()
+        {
+            RevertSelectedComponentsToPrefab<Image>();
+        }
+
+        [MenuItem("Editor Toolbox/Scene/Revert selected components/Light")]
+        public static void RevertSelectedLightComponents()
+        {
+            RevertSelectedComponentsToPrefab<Light>();
+        }
+
+        [MenuItem("Editor Toolbox/Scene/Revert selected components/NavMeshAgent")]
+        public static void RevertSelectedNavMeshAgentComponents()
+        {
+            RevertSelectedComponentsToPrefab<UnityEngine.AI.NavMeshAgent>();
+        }
+
+        [MenuItem("Editor Toolbox/Scene/Revert selected components/Rigidbody")]
+        public static void RevertSelectedRigidbodyComponents()
+        {
+            RevertSelectedComponentsToPrefab<Rigidbody>();
+        }
+
+        [MenuItem("Editor Toolbox/Scene/Revert selected components/Transform")]
+        public static void RevertSelectedTransformComponents()
+        {
+            RevertSelectedComponentsToPrefab<Transform>();
+        }
+
+        #endregion
+
         #region Scene commands
+
+        /// <summary>
+        /// Reverts the specified type of component to its prefab values on all selected GameObjects in the scene.
+        /// If a selected GameObject is not part of a prefab instance, it will be skipped.
+        /// </summary>
+        /// <typeparam name="T">The type of component to revert. Must derive from Component.</typeparam>
+        [MenuItem("Editor Toolbox/Scene/Revert selected components", priority = 100 * (int)LetterAsInteger.S + (int)LetterAsInteger.R)]
+        public static void RevertSelectedComponents<T>() where T : Component
+        {
+            var selectedObjects = Selection.gameObjects;
+
+            if (selectedObjects.Length == 0)
+            {
+                Debug.Log("No objects selected, returning.");
+                return;
+            }
+
+            foreach (var selectedObject in selectedObjects)
+            {
+                if (PrefabUtility.IsPartOfPrefabInstance(selectedObject))
+                {
+                    T[] components = selectedObject.GetComponents<T>();
+                    foreach (var component in components)
+                    {
+                        PrefabUtility.RevertObjectOverride(component, InteractionMode.UserAction);
+                    }
+                }
+                else
+                {
+                    Debug.Log("Object " + selectedObject.name + " is not part of a prefab, skipping.");
+                }
+            }
+        }
+
+        private static void RevertSelectedComponentsToPrefab<T>() where T : Component
+        {
+            var selectedObjects = Selection.gameObjects;
+
+            if (selectedObjects.Length == 0)
+            {
+                Debug.Log("No objects selected, returning.");
+                return;
+            }
+
+            foreach (var selectedObject in selectedObjects)
+            {
+                if (PrefabUtility.IsPartOfPrefabInstance(selectedObject))
+                {
+                    T[] components = selectedObject.GetComponents<T>();
+                    foreach (var component in components)
+                    {
+                        PrefabUtility.RevertObjectOverride(component, InteractionMode.UserAction);
+                    }
+                }
+                else
+                {
+                    Debug.Log("Object " + selectedObject.name + " is not part of a prefab, skipping.");
+                }
+            }
+        }
 
         /// <summary>
         /// Alphabetize children of each selected parent game object.
         /// </summary>
         [MenuItem("Editor Toolbox/Scene/Alphabetize children", priority = 100 * (int)LetterAsInteger.S + (int)LetterAsInteger.A)]
-        [MenuItem("GameObject/Editor Toolbox/Scene/Alphabetize children", priority = 100 * (int)LetterAsInteger.S + (int)LetterAsInteger.A)]
         public static void AlphabetizeChildren()
         {
             GameObject[] selectedGameObjects = Selection.gameObjects;
@@ -157,7 +275,6 @@ namespace EditorToolbox
         /// Center the parent GameObject to the geometric center of its child objects.
         /// </summary>
         [MenuItem("Editor Toolbox/Scene/Center to geometry", priority = 100 * (int)LetterAsInteger.S + (int)LetterAsInteger.C)]
-        [MenuItem("GameObject/Editor Toolbox/Scene/Center to geometry", priority = 100 * (int)LetterAsInteger.S + (int)LetterAsInteger.C)]
         public static void CenterToGeometry()
         {
             GameObject[] selectedObjects = Selection.gameObjects;
@@ -203,7 +320,6 @@ namespace EditorToolbox
         /// Destroy all colliders on selected game objects.
         /// </summary>
         [MenuItem("Editor Toolbox/Scene/Destroy colliders", priority = (100 * (int)LetterAsInteger.S) + (int)LetterAsInteger.D)]
-        [MenuItem("GameObject/Editor Toolbox/Scene/Destroy colliders", priority = (100 * (int)LetterAsInteger.S) + (int)LetterAsInteger.D)]
         public static void DestroyColliders()
         {
             foreach (GameObject selectedGameObject in Selection.gameObjects)
@@ -226,7 +342,6 @@ namespace EditorToolbox
         /// For each selected parent game object, move colliders on all children to their respective parents.
         /// </summary>
         [MenuItem("Editor Toolbox/Scene/Move all colliders to parent", priority = (100 * (int)LetterAsInteger.S) + (int)LetterAsInteger.M)]
-        [MenuItem("GameObject/Editor Toolbox/Scene/Move all colliders to parent", priority = (100 * (int)LetterAsInteger.S) + (int)LetterAsInteger.M)]
         public static void MoveAllCollidersToParent()
         {
             foreach (GameObject parentGameObject in Selection.gameObjects)
@@ -274,7 +389,6 @@ namespace EditorToolbox
         /// to the root game objects in bulk.
         /// </summary> 
         [MenuItem("Editor Toolbox/Scene/Move colliders on top child to parent", priority = (100 * (int)LetterAsInteger.S) + (int)LetterAsInteger.M)]
-        [MenuItem("GameObject/Editor Toolbox/Scene/Move colliders on top child to parent", priority = (100 * (int)LetterAsInteger.S) + (int)LetterAsInteger.M)]
         public static void MoveCollidersOnTopChildToParent()
         {
             foreach (GameObject parentGameObject in Selection.gameObjects)
@@ -311,7 +425,6 @@ namespace EditorToolbox
         /// The process is undoable.
         /// </summary>
         [MenuItem("Editor Toolbox/Scene/Move components on top child to parent", priority = 100 * (int)LetterAsInteger.S + (int)LetterAsInteger.M)]
-        [MenuItem("GameObject/Editor Toolbox/Scene/Move components on top child to parent", priority = 100 * (int)LetterAsInteger.S + (int)LetterAsInteger.M)]
         public static void MoveComponentsOnTopChildToParent()
         {            
             foreach (GameObject parentGameObject in Selection.gameObjects)
@@ -347,7 +460,6 @@ namespace EditorToolbox
         /// Paste component from clipboard as new onto the actively selected game object.
         /// </summary>
         [MenuItem("Editor Toolbox/Scene/Paste component as new", priority = 100 * (int)LetterAsInteger.S + (int)LetterAsInteger.P)]
-        [MenuItem("GameObject/Editor Toolbox/Scene/Paste component as new", priority = 100 * (int)LetterAsInteger.S + (int)LetterAsInteger.P)]
         public static void PasteComponentAsNew()
         {
             if (Selection.activeGameObject != null && Selection.activeGameObject.scene.isLoaded)
@@ -365,7 +477,6 @@ namespace EditorToolbox
         /// Rounds the x, y, and z position of selected game objects to the nearest grid value.
         /// </summary>
         [MenuItem("Editor Toolbox/Scene/Push children to grid", priority = 100 * (int)LetterAsInteger.S + (int)LetterAsInteger.P)]
-        [MenuItem("GameObject/Editor Toolbox/Scene/Push children to grid", priority = 100 * (int)LetterAsInteger.S + (int)LetterAsInteger.P)]
         public static void PushChildrenToGrid()
         {
             GameObject[] selectedGameObjects = Selection.gameObjects;
@@ -409,7 +520,6 @@ namespace EditorToolbox
         /// It does nothing if the selected GameObject is not a prefab instance or not in the scene.
         /// </summary>
         [MenuItem("Editor Toolbox/Scene/Rename to prefab name", priority = 100 * (int)LetterAsInteger.S + (int)LetterAsInteger.R)]
-        [MenuItem("GameObject/Editor Toolbox/Scene/Rename to prefab name", priority = 100 * (int)LetterAsInteger.S + (int)LetterAsInteger.R)]
         public static void RenameToPrefabName()
         {
             GameObject[] selectedGameObjects = Selection.gameObjects;
@@ -441,7 +551,6 @@ namespace EditorToolbox
         /// Resets the position of selected parent game objects while maintaining the global position of their children.
         /// </summary>
         [MenuItem("Editor Toolbox/Scene/Reset category transform position", priority = 100 * (int)LetterAsInteger.S + (int)LetterAsInteger.R)]
-        [MenuItem("GameObject/Editor Toolbox/Scene/Reset category transform position", priority = 100 * (int)LetterAsInteger.S + (int)LetterAsInteger.R)]
         public static void ResetCategoryTransformPosition()
         {
             var selectedGameObjects = Selection.gameObjects;
@@ -478,7 +587,6 @@ namespace EditorToolbox
         /// while preserving the global rotation and position of their child GameObjects.
         /// </summary>
         [MenuItem("Editor Toolbox/Scene/Reset category transform rotation", priority = 100 * (int)LetterAsInteger.S + (int)LetterAsInteger.R)]
-        [MenuItem("GameObject/Editor Toolbox/Scene/Reset category transform rotation", priority = 100 * (int)LetterAsInteger.S + (int)LetterAsInteger.R)]
         public static void ResetCategoryTransformRotation()
         {
             var selectedGameObjects = Selection.gameObjects;
@@ -513,7 +621,6 @@ namespace EditorToolbox
         /// Sets the local transform position of selected objects to (0, 0, 0).
         /// </summary>
         [MenuItem("Editor Toolbox/Scene/Reset local transform position", priority = 100 * (int)LetterAsInteger.S + (int)LetterAsInteger.R)]
-        [MenuItem("GameObject/Editor Toolbox/Scene/Reset local transform position", priority = 100 * (int)LetterAsInteger.S + (int)LetterAsInteger.R)]
         public static void ResetLocalTransformPosition()
         {
             GameObject[] selectedGameObjects = Selection.gameObjects;
@@ -538,7 +645,6 @@ namespace EditorToolbox
         /// Reverses the sibling order of the children of selected game objects in the hierarchy.
         /// </summary>
         [MenuItem("Editor Toolbox/Scene/Reverse sibling order", priority = (100 * (int)LetterAsInteger.S) + (int)LetterAsInteger.R)]
-        [MenuItem("GameObject/Editor Toolbox/Scene/Reverse sibling order", priority = (100 * (int)LetterAsInteger.S) + (int)LetterAsInteger.R)]
         public static void ReverseSiblingOrder()
         {
             foreach (GameObject parentGameObject in Selection.gameObjects)
@@ -564,7 +670,6 @@ namespace EditorToolbox
         /// Select children of selected game objects while deselecting the current selection.
         /// </summary>
         [MenuItem("Editor Toolbox/Scene/Select children", priority = 100 * (int)LetterAsInteger.S + (int)LetterAsInteger.S)]
-        [MenuItem("GameObject/Editor Toolbox/Scene/Select children", priority = 100 * (int)LetterAsInteger.S + (int)LetterAsInteger.S)]
         public static void SelectChildren()
         {
             GameObject[] selectedGameObjects = Selection.gameObjects;
@@ -604,7 +709,6 @@ namespace EditorToolbox
         /// Select parents of selected game objects while deselecting the current selection.
         /// </summary>
         [MenuItem("Editor Toolbox/Scene/Select parents", priority = 100 * (int)LetterAsInteger.S + (int)LetterAsInteger.S)]
-        [MenuItem("GameObject/Editor Toolbox/Scene/Select parents", priority = 100 * (int)LetterAsInteger.S + (int)LetterAsInteger.S)]
         public static void SelectParents()
         {
             GameObject[] selectedGameObjects = Selection.gameObjects;
@@ -639,7 +743,6 @@ namespace EditorToolbox
         /// Toggles the active status of selected GameObjects in the hierarchy.
         /// </summary>
         [MenuItem("Editor Toolbox/Scene/Toggle active status", priority = 100 * (int)LetterAsInteger.S + (int)LetterAsInteger.T)]
-        [MenuItem("GameObject/Editor Toolbox/Scene/Toggle active status", priority = 100 * (int)LetterAsInteger.S + (int)LetterAsInteger.T)]
         public static void ToggleActiveStatus()
         {
             GameObject[] selectedGameObjects = Selection.gameObjects;
@@ -677,7 +780,6 @@ namespace EditorToolbox
         /// Remove missing scripts from selected GameObjects and Prefabs within the scene hierarchy or project window.
         /// </summary>
         [MenuItem("Editor Toolbox/Asset/Remove missing scripts", priority = (100 * (int)LetterAsInteger.O) + (int)LetterAsInteger.R)]
-        [MenuItem("GameObject/Editor Toolbox/Asset/Remove missing scripts", priority = (100 * (int)LetterAsInteger.O) + (int)LetterAsInteger.R)]
         public static void RemoveMissingScripts()
         {
             Object[] collectedDeepHierarchy = EditorUtility.CollectDeepHierarchy(Selection.gameObjects);
