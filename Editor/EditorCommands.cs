@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -176,6 +177,18 @@ namespace EditorToolbox
             RevertSelectedComponentsToPrefab<Transform>();
         }
 
+        [MenuItem("Editor Toolbox/Scene/Revert selected components/TextMeshPro - Text UI")]
+        public static void RevertSelectedTMPTextUIComponents()
+        {
+            RevertSelectedComponentsToPrefab<TMP_Text>();
+        }
+
+        [MenuItem("Editor Toolbox/Scene/Revert selected components/Button")]
+        public static void RevertSelectedButtonComponents()
+        {
+            RevertSelectedComponentsToPrefab<Button>();
+        }
+
         #endregion
 
         #region Scene commands
@@ -185,7 +198,6 @@ namespace EditorToolbox
         /// If a selected GameObject is not part of a prefab instance, it will be skipped.
         /// </summary>
         /// <typeparam name="T">The type of component to revert. Must derive from Component.</typeparam>
-        [MenuItem("Editor Toolbox/Scene/Revert selected components", priority = 100 * (int)LetterAsInteger.S + (int)LetterAsInteger.R)]
         public static void RevertSelectedComponents<T>() where T : Component
         {
             var selectedObjects = Selection.gameObjects;
