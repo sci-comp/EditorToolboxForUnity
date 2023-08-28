@@ -193,6 +193,33 @@ namespace EditorToolbox
 
         #region Scene commands
 
+        
+        [MenuItem("Editor Toolbox/Scene/Count all game objects", priority = 100 * (int)LetterAsInteger.C + (int)LetterAsInteger.C)]
+        public static void CountActiveInactiveGameObjects()
+        {
+            GameObject[] allGameObjects = GameObject.FindObjectsOfType<GameObject>();
+            int activeCount = 0;
+            int inactiveCount = 0;
+
+            foreach (GameObject go in allGameObjects)
+            {
+                if (go.scene.isLoaded)
+                {
+                    if (go.activeSelf)
+                    {
+                        activeCount++;
+                    }
+                    else
+                    {
+                        inactiveCount++;
+                    }
+                }
+            }
+
+            Debug.Log("Active GameObjects: " + activeCount + ", Inactive GameObjects: " + inactiveCount);
+        }
+
+
         /// <summary>
         /// Reverts the specified type of component to its prefab values on all selected GameObjects in the scene.
         /// If a selected GameObject is not part of a prefab instance, it will be skipped.
@@ -750,6 +777,34 @@ namespace EditorToolbox
             }
         }
 
+        /// <summary>
+        /// Sets the size of the RectTransform of each selected GameObject to match the dimensions of the Image's sprite.
+        /// </summary>
+        [MenuItem("Editor Toolbox/Scene/Set rect to image size", priority = (100 * (int)LetterAsInteger.S) + (int)LetterAsInteger.S)]
+        public static void SetRectToImageSize()
+        {
+            foreach (GameObject selectedGameObject in Selection.gameObjects)
+            {
+                if (!selectedGameObject.scene.isLoaded)
+                {
+                    Debug.LogWarning("This method only works for scene objects. Returning.");
+                    return;
+                }
+
+                Image image = selectedGameObject.GetComponent<Image>();
+                RectTransform rectTransform = selectedGameObject.GetComponent<RectTransform>();
+
+                if (image != null && rectTransform != null)
+                {
+                    Sprite sprite = image.sprite;
+                    if (sprite != null)
+                    {
+                        Vector2 pixelSize = sprite.rect.size;
+                        rectTransform.sizeDelta = pixelSize;
+                    }
+                }
+            }
+        }
 
         /// <summary>
         /// Toggles the active status of selected GameObjects in the hierarchy.
